@@ -1,6 +1,6 @@
-# 复制图文 (Copy Image Text)
+# 复制图文增强版 (Copy Image Text Plus)
 
-Copy Image Text is an Obsidian plugin that allows users to copy note content (including text and images) to the clipboard while maintaining formatting.
+Copy Image Text Plus is an Obsidian plugin that allows users to copy note content, including text and local images, to the clipboard while maintaining formatting. It can also export note content as HTML files.
 
 ## Features
 
@@ -29,7 +29,7 @@ Tip: You can set hotkeys for these two commands in Obsidian Settings under "Hotk
 2. Go to "Third-party plugins" settings page
 3. Make sure "Safe mode" is turned off
 4. Click "Browse community plugins"
-5. Search for "Copy Image Text"
+5. Search for "Copy Image Text Plus"
 6. Click "Install"
 7. After installation, enable the plugin
 
@@ -58,16 +58,20 @@ Note: When publishing a new version, make sure to run `npm run build` first, the
 
 ## Feedback and Support
 
-If you encounter any issues or have suggestions for improvement, please raise an issue in the GitHub repository.
+If you encounter any issues or have suggestions for improvement, please raise an issue in the GitHub repository:
+
+https://github.com/jihaohaaaa/obsidian-copy-image-text/issues
 
 ## License
 
 This plugin is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+This plugin is based on [msgk239/obsidian-copy-image-text](https://github.com/msgk239/obsidian-copy-image-text), originally developed by msgk and distributed under the MIT License.
+
 ## Author
 
-Developed and maintained by msgk.
+Maintained by jihaohaaaa.
 
 ## Version
 
-Current version: 1.1.8
+Current version: 1.1.9

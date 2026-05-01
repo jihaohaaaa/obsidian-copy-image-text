@@ -1,7 +1,7 @@
 {
-  "name": "copy-image-text",
-  "version": "1.1.8",
-  "description": "复制图文 (Copy Image Text) - Copy note content (including text and images) to clipboard. 复制笔记内容（包括文本和图片）到剪贴板。",
+  "name": "jihao-copy-image-text",
+  "version": "1.1.9",
+  "description": "复制图文增强版 (Copy Image Text Plus) - Copy Obsidian note content, including local images, as rich text, Markdown, or HTML.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -10,7 +10,15 @@
     "postversion": "git tag -d v%npm_package_version% && git tag %npm_package_version%"
   },
   "keywords": [],
-  "author": "msgk",
+  "author": "jihaohaaaa",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jihaohaaaa/obsidian-copy-image-text.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jihaohaaaa/obsidian-copy-image-text/issues"
+  },
+  "homepage": "https://github.com/jihaohaaaa/obsidian-copy-image-text#readme",
   "license": "MIT",
   "devDependencies": {
     "@electron/remote": "^2.1.2",

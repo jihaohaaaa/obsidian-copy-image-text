@@ -1,6 +1,6 @@
-# 复制图文 (Copy Image Text)
+# 复制图文增强版 (Copy Image Text Plus)
 
-复制图文 (Copy Image Text) 是一个 Obsidian 插件,允许用户将笔记内容(包括文本和图片)复制到剪贴板,同时保持格式。
+复制图文增强版 (Copy Image Text Plus) 是一个 Obsidian 插件，允许用户将笔记内容（包括文本和图片）复制到剪贴板，同时保持格式，也可以导出为 HTML 文件。
 
 ## 功能
 
@@ -20,7 +20,7 @@
 2. 进入"第三方插件"设置页面
 3. 确保"安全模式"已关闭
 4. 点击"浏览社区插件"
-5. 搜索"复制图文"
+5. 搜索"复制图文增强版"
 6. 点击"安装"
 7. 安装完成后,启用该插件
 
@@ -60,16 +60,20 @@
 
 ## 反馈和支持
 
-如果您遇到任何问题或有改进建议,请在 GitHub 仓库中提出 issue。
+如果您遇到任何问题或有改进建议，请在 GitHub 仓库中提出 issue：
+
+https://github.com/jihaohaaaa/obsidian-copy-image-text/issues
 
 ## 许可证
 
 本插件采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
 
+本插件基于 [msgk239/obsidian-copy-image-text](https://github.com/msgk239/obsidian-copy-image-text) 修改，原项目由 msgk 开发，并按 MIT 许可证分发。
+
 ## 作者
 
-由 msgk 开发和维护。
+由 jihaohaaaa 维护。
 
 ## 版本
 
-当前版本: 1.1.8
+当前版本: 1.1.9
