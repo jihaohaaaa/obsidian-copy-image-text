@@ -4,11 +4,11 @@ import tsParser from '@typescript-eslint/parser';
 
 export default [
   {
-    ignores: ['main.js', 'node_modules/**']
+    ignores: ['dist/**', 'main.js', 'node_modules/**']
   },
   js.configs.recommended,
   {
-    files: ['src/**/*.ts'],
+    files: ['**/*.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -42,7 +42,7 @@ export default [
     }
   },
   {
-    files: ['*.mjs', 'scripts/**/*.mjs'],
+    files: ['*.ts', 'scripts/**/*.ts'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

@@ -4,16 +4,16 @@
   "description": "复制图文增强版 (Copy Image Text Plus) - Copy Obsidian note content, including local images, as rich text, Markdown, or HTML.",
   "main": "main.js",
   "scripts": {
-    "dev": "node esbuild.config.mjs",
+    "dev": "vite build --watch --mode development",
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "build": "npm run typecheck && node esbuild.config.mjs production",
+    "build": "npm run typecheck && vite build && tsx scripts/copy-build-output.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run lint && npm run format:check",
-    "version:bump": "node scripts/bump-version.mjs",
-    "install:local": "node scripts/install-local.mjs",
-    "release:github": "node scripts/release-github.mjs"
+    "version:bump": "tsx scripts/bump-version.ts",
+    "install:local": "tsx scripts/install-local.ts",
+    "release:github": "tsx scripts/release-github.ts"
   },
   "packageManager": "npm@11.13.0",
   "engines": {
@@ -36,13 +36,14 @@
     "@types/node": "^25.6.0",
     "@typescript-eslint/eslint-plugin": "8.59.1",
     "@typescript-eslint/parser": "8.59.1",
-    "builtin-modules": "5.1.0",
-    "esbuild": "0.28.0",
     "eslint": "^10.2.1",
+    "jiti": "^2.6.1",
     "obsidian": "1.12.3",
     "prettier": "^3.8.3",
     "tslib": "2.8.1",
-    "typescript": "6.0.3"
+    "tsx": "^4.21.0",
+    "typescript": "6.0.3",
+    "vite": "^8.0.10"
   },
   "dependencies": {
     "marked": "^18.0.2",

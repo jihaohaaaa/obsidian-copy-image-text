@@ -62,7 +62,7 @@ After the plugin is listed in the Obsidian community plugin directory, install i
 
 ## Development Notes
 
-This plugin is developed with TypeScript and uses Node.js with npm. Prefer the repository `.node-version` and `packageManager` settings.
+This plugin is developed with TypeScript and uses Node.js with npm. Prefer the repository `.node-version` and `packageManager` settings. The bundler is Vite.
 
 Common commands:
 

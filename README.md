@@ -64,7 +64,7 @@ https://github.com/jihaohaaaa/obsidian-copy-image-text
 
 ## 开发说明
 
-本插件使用 TypeScript 开发，固定使用 Node.js 和 npm。推荐使用仓库中的 `.node-version` 和 `packageManager` 配置。
+本插件使用 TypeScript 开发，固定使用 Node.js 和 npm。推荐使用仓库中的 `.node-version` 和 `packageManager` 配置。打包器使用 Vite。
 
 常用命令：
 

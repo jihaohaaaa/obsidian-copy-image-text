@@ -27,6 +27,7 @@ yarn-error.log
 
 # 忽略 TypeScript 编译输出
 *.js.map
+dist/
 
 # 忽略编译后的 main.js 文件
 main.js

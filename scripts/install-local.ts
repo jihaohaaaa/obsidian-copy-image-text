@@ -8,7 +8,12 @@ if (!vaultPath) {
   process.exit(1);
 }
 
-const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
+type ManifestJson = {
+  id: string;
+  version: string;
+};
+
+const manifest = JSON.parse(readFileSync('manifest.json', 'utf8')) as ManifestJson;
 const pluginDir = resolve(vaultPath, '.obsidian', 'plugins', manifest.id);
 
 const requiredAssets = ['main.js', 'manifest.json'];

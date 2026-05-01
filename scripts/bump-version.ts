@@ -3,27 +3,38 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const targetVersion = process.argv[2];
 
 if (!targetVersion || !/^\d+\.\d+\.\d+$/.test(targetVersion)) {
-  console.error('Usage: node scripts/bump-version.mjs <x.y.z>');
+  console.error('Usage: npm run version:bump -- <x.y.z>');
   process.exit(1);
 }
 
-function readJson(path) {
-  return JSON.parse(readFileSync(path, 'utf8'));
+function readJson<T>(path: string): T {
+  return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
 
-function writeJson(path, value, indent = 2) {
+function writeJson(path: string, value: unknown, indent = 2): void {
   writeFileSync(path, `${JSON.stringify(value, null, indent)}\n`);
 }
 
-const packageJson = readJson('package.json');
+type PackageJson = {
+  version: string;
+};
+
+type ManifestJson = {
+  version: string;
+  minAppVersion: string;
+};
+
+type VersionsJson = Record<string, string>;
+
+const packageJson = readJson<PackageJson>('package.json');
 packageJson.version = targetVersion;
 writeJson('package.json', packageJson);
 
-const manifest = readJson('manifest.json');
+const manifest = readJson<ManifestJson>('manifest.json');
 manifest.version = targetVersion;
 writeJson('manifest.json', manifest);
 
-const versions = readJson('versions.json');
+const versions = readJson<VersionsJson>('versions.json');
 versions[targetVersion] = manifest.minAppVersion;
 writeJson('versions.json', versions);
 

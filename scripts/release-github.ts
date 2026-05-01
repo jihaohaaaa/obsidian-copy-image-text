@@ -8,15 +8,21 @@ if (!targetVersion || !/^\d+\.\d+\.\d+$/.test(targetVersion)) {
   process.exit(1);
 }
 
-function run(command, args) {
+function run(command: string, args: string[]): void {
   execFileSync(command, args, { stdio: 'inherit' });
 }
 
-function output(command, args) {
+function output(command: string, args: string[]): string {
   return execFileSync(command, args, { encoding: 'utf8' }).trim();
 }
 
-const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
+type PackageJson = {
+  repository?: {
+    url?: string;
+  };
+};
+
+const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as PackageJson;
 const repo = packageJson.repository?.url
   ?.replace(/^git\+https:\/\/github\.com\//, '')
   .replace(/\.git$/, '');
@@ -33,7 +39,7 @@ if (status) {
   process.exit(1);
 }
 
-run('node', ['scripts/bump-version.mjs', targetVersion]);
+run('npm', ['run', 'version:bump', '--', targetVersion]);
 run('npm', ['install', '--package-lock-only', '--include=dev', '--ignore-scripts']);
 run('npm', ['run', 'build']);
 
