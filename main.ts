@@ -1,5 +1,6 @@
 import { Editor, MarkdownFileInfo, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
 import * as fs from 'fs/promises';
+import { Marked, Renderer, RendererThis, Tokens, TokenizerAndRendererExtension, TokenizerThis } from 'marked';
 const { dialog } = require('@electron/remote');
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
@@ -43,7 +44,8 @@ export default class CopyImageTextPlugin extends Plugin {
       
       new Notice('内容已成功复制');
     } catch (error) {
-      new Notice('复制失败，请稍后重试');
+      console.error('Copy Image Text: copy rich text failed', error);
+      new Notice(`复制失败: ${this.getErrorMessage(error)}`);
     }
   }
 
@@ -95,7 +97,8 @@ export default class CopyImageTextPlugin extends Plugin {
 
 
     } catch (error) {
-      new Notice('导出HTML失败，请稍后重试');
+      console.error('Copy Image Text: export HTML failed', error);
+      new Notice(`导出HTML失败: ${this.getErrorMessage(error)}`);
     }
   }
 
@@ -114,7 +117,8 @@ export default class CopyImageTextPlugin extends Plugin {
       await navigator.clipboard.writeText(content);
       new Notice('Markdown格式已复制');
     } catch (error) {
-      new Notice('复制失败，请稍后重试');
+      console.error('Copy Image Text: copy Markdown failed', error);
+      new Notice(`复制失败: ${this.getErrorMessage(error)}`);
     }
   }
 
@@ -164,107 +168,88 @@ export default class CopyImageTextPlugin extends Plugin {
     });
 
     const externalImageReplacements = await Promise.all(Array.from(htmlContent.matchAll(externalImageRegex)).map(
-      match => this.replaceExternalImageWithBase64(match[1]) as Promise<{ original: string, replacement: string }>
+      match => this.replaceExternalImageWithBase64(match[1], match[0]) as Promise<{ original: string, replacement: string }>
     ));
 
     externalImageReplacements.forEach(( { original, replacement }: { original: string, replacement: string } ) => {
       htmlContent = htmlContent.replace(original, replacement);
     });
 
-    const codeBlockPlaceholders = new Map<string, string>();
-    let placeholderIndex = 0;
-
-    // 1. 用占位符替换代码块
-    htmlContent = htmlContent.replace(/(^|\n)```(\w+)?\n([\s\S]*?)\n(?<!\S)```($|\n)/g, (match, p1, lang, code, p4) => {
-      const placeholder = `___CODE_BLOCK_PLACEHOLDER_${placeholderIndex}___`;
-      const language = this.getLanguageFromCodeBlock(match[0]); // 从匹配中提取语言
-      const lines = code.split('\n');
-      
-      let codeHtml = '';
-      for (let i = 0; i < lines.length; i++) {
-        const highlightedLine = this.highlightCodeLine(lines[i]);
-        codeHtml += `<code><span leaf="">${highlightedLine}</span></code>\n`;
-      }
-
-      const lineNumbersHtml = Array.from({ length: lines.length }, (_, i) => `<li></li>`).join('\n');
-
-      const codeBlockHtml = `
-<section class="code-snippet__js code-snippet__fix code-snippet__${language}">
-  <ul class="code-snippet__line-index code-snippet__${language}">
-    ${lineNumbersHtml}
-  </ul>
-  <pre class="code-snippet__js code-snippet code-snippet_nowrap" data-lang="${language}">
-    ${codeHtml.trim()}
-  </pre>
-</section>
-      `;
-      codeBlockPlaceholders.set(placeholder, codeBlockHtml);
-      placeholderIndex++;
-      return placeholder;
+    const markdownParser = new Marked({
+      async: false,
+      breaks: true,
+      gfm: true,
+      renderer: this.createRichTextRenderer(),
+      extensions: [this.createHighlightExtension()]
     });
+    const markedContent = markdownParser.parse(htmlContent, { async: false });
 
-    htmlContent = htmlContent.replace(/^---$/gm, '<hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">');
-
-    htmlContent = htmlContent.replace(/^(#+)\s+(.*?)$/gm, (match, hashes, title) => {
-      const level = hashes.length;
-      const fontSize = 28 - (level * 2);
-      return `<h${level} style="font-size: ${fontSize}px; font-weight: bold; margin: 10px 0;">${title}</h${level}>`;
-    });
-
-    htmlContent = this.convertMarkdownListsToHtml(htmlContent);
-
-    htmlContent = htmlContent
-      .replace(/\n/g, '<br>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/`(.+?)`/g, '<code style="background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px;">$1</code>');
-    
-    htmlContent = htmlContent.replace(/==([^=\n]+?)==/g, (match, p1) => {
-      const replaced = `<span style="background-color: yellow;">${p1}</span>`;
-      return replaced;
-    });
-
-    htmlContent = htmlContent
-      .replace(/(?<!\!)\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color: #576b95; text-decoration: none;">$1</a>');
-
-    // 2. 将占位符替换回原始代码块
-    codeBlockPlaceholders.forEach((value, key) => {
-      htmlContent = htmlContent.replace(key, value);
-    });
-
-    htmlContent = this.cleanAndFormatHtml(htmlContent);
+    htmlContent = this.cleanAndFormatHtml(markedContent);
     return `<div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; color: #333; line-height: 1.6;">${htmlContent}</div>`;
   }
 
-  private convertMarkdownListsToHtml(html: string): string {
-    const listBlockRegex = /(^|\n)((?:[ \t]*(?:[-*+]\s+|\d+[.)]\s+).+(?:\n|$))+)/g;
+  private createRichTextRenderer(): Renderer {
+    const renderer = new Renderer();
+    const plugin = this;
 
-    return html.replace(listBlockRegex, (match, prefix, block) => {
-      const lines = block
-        .split('\n')
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0);
+    renderer.heading = function(this: Renderer, { tokens, depth }: Tokens.Heading) {
+      const fontSize = 28 - (depth * 2);
+      return `<h${depth} style="font-size: ${fontSize}px; font-weight: bold; margin: 10px 0;">${this.parser.parseInline(tokens)}</h${depth}>`;
+    };
 
-      if (lines.length === 0) {
-        return match;
+    renderer.hr = () => '<hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">';
+    renderer.link = function(this: Renderer, { href, title, tokens }: Tokens.Link) {
+      const titleAttr = title ? ` title="${plugin.escapeHtml(title)}"` : '';
+      return `<a href="${plugin.escapeHtml(href)}"${titleAttr} style="color: #576b95; text-decoration: none;">${this.parser.parseInline(tokens)}</a>`;
+    };
+    renderer.image = ({ href, title, text }: Tokens.Image) => {
+      const titleAttr = title ? ` title="${plugin.escapeHtml(title)}"` : '';
+      return `<img src="${plugin.escapeHtml(href)}" alt="${plugin.escapeHtml(text)}"${titleAttr} style="max-width: 100%;">`;
+    };
+    renderer.list = function(this: Renderer, { ordered, start, items }: Tokens.List) {
+      const tag = ordered ? 'ol' : 'ul';
+      const startAttr = ordered && start !== 1 && start !== '' ? ` start="${start}"` : '';
+      const body = items.map((item) => this.listitem(item)).join('');
+      return `<${tag}${startAttr} style="margin: 8px 0 8px 24px; padding-left: 20px;">${body}</${tag}>`;
+    };
+    renderer.listitem = function(this: Renderer, item: Tokens.ListItem) {
+      const checkbox = item.task ? `<input type="checkbox"${item.checked ? ' checked' : ''} disabled> ` : '';
+      return `<li style="margin: 4px 0;">${checkbox}${this.parser.parse(item.tokens)}</li>`;
+    };
+    renderer.codespan = ({ text }: Tokens.Codespan) => `<code style="background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px;">${plugin.escapeHtml(text)}</code>`;
+    renderer.code = ({ text, lang }: Tokens.Code) => {
+      const language = lang || 'text';
+      return `<pre data-lang="${plugin.escapeHtml(language)}" style="background-color: #f6f8fa; padding: 12px; border-radius: 4px; overflow-x: auto;"><code>${plugin.escapeHtml(text)}</code></pre>`;
+    };
+
+    return renderer;
+  }
+
+  private createHighlightExtension(): TokenizerAndRendererExtension {
+    return {
+      name: 'highlight',
+      level: 'inline' as const,
+      start(src: string): number | void {
+        const index = src.indexOf('==');
+        return index >= 0 ? index : undefined;
+      },
+      tokenizer(this: TokenizerThis, src: string) {
+        const match = /^==([^=\n]+?)==/.exec(src);
+        if (!match) {
+          return undefined;
+        }
+
+        return {
+          type: 'highlight',
+          raw: match[0],
+          text: match[1],
+          tokens: this.lexer.inlineTokens(match[1])
+        };
+      },
+      renderer(this: RendererThis, token: Tokens.Generic) {
+        return `<span style="background-color: yellow;">${this.parser.parseInline(token.tokens || [])}</span>`;
       }
-
-      const isOrderedList = lines.every((line: string) => /^\d+[.)]\s+/.test(line));
-      const isUnorderedList = lines.every((line: string) => /^[-*+]\s+/.test(line));
-
-      if (!isOrderedList && !isUnorderedList) {
-        return match;
-      }
-
-      const tag = isOrderedList ? 'ol' : 'ul';
-      const itemRegex = isOrderedList ? /^\d+[.)]\s+/ : /^[-*+]\s+/;
-      const items = lines
-        .map((line: string) => line.replace(itemRegex, '').trim())
-        .map((item: string) => `<li style="margin: 4px 0;">${item}</li>`)
-        .join('');
-
-      return `${prefix}<${tag} style="margin: 8px 0 8px 24px; padding-left: 20px;">${items}</${tag}>`;
-    });
+    };
   }
 
   private cleanAndFormatHtml(html: string): string {
@@ -309,7 +294,7 @@ export default class CopyImageTextPlugin extends Plugin {
     }
   }
 
-  async replaceExternalImageWithBase64(imagePath: string): Promise<{ original: string, replacement: string }> {
+  async replaceExternalImageWithBase64(imagePath: string, original?: string): Promise<{ original: string, replacement: string }> {
     try {
       let filePath = imagePath.replace(/^file:\/\/\//, '');
 
@@ -322,11 +307,11 @@ export default class CopyImageTextPlugin extends Plugin {
       const mimeType = this.getMimeType(filePath);
 
       return {
-        original: `![](${imagePath})`,
+        original: original || `![](${imagePath})`,
         replacement: `<img src="data:${mimeType};base64,${base64}" alt="${imagePath}" style="max-width: 100%;">`
       };
     } catch (error) {
-      return { original: `![](${imagePath})`, replacement: `[外部图片处理错误: ${imagePath}]` };
+      return { original: original || `![](${imagePath})`, replacement: `[外部图片处理错误: ${imagePath}]` };
     }
   }
 
@@ -347,6 +332,18 @@ export default class CopyImageTextPlugin extends Plugin {
       default:
         return 'image/png';
     }
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    if (typeof error === 'string' && error.length > 0) {
+      return error;
+    }
+
+    return '未知错误，请查看控制台日志';
   }
 
 private getLanguageFromCodeBlock(codeBlockHeader: string): string {
