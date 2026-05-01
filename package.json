@@ -1,6 +1,6 @@
 {
   "name": "jihao-copy-image-text",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "复制图文增强版 (Copy Image Text Plus) - Copy Obsidian note content, including local images, as rich text, Markdown, or HTML.",
   "main": "main.js",
   "scripts": {
