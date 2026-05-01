@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
+import { Editor, MarkdownFileInfo, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
 import * as fs from 'fs/promises';
 const { dialog } = require('@electron/remote');
 export default class CopyImageTextPlugin extends Plugin {
@@ -6,24 +6,24 @@ export default class CopyImageTextPlugin extends Plugin {
     this.addCommand({
       id: 'copy-text',
       name: '复制文本和图片(富文本)',
-      editorCallback: (editor: Editor, view: MarkdownView) => this.copyTextAndImages(editor, view)
+      editorCallback: (editor: Editor, view: MarkdownFileInfo) => this.copyTextAndImages(editor, view)
     });
 
 
     this.addCommand({
       id: 'copy-markdown',
       name: '复制为Markdown格式',
-      editorCallback: (editor: Editor, view: MarkdownView) => this.copyAsMarkdown(editor, view)
+      editorCallback: (editor: Editor, view: MarkdownFileInfo) => this.copyAsMarkdown(editor, view)
     });
 
     this.addCommand({
       id: 'export-html',
       name: '导出为HTML文件',
-      editorCallback: (editor: Editor, view: MarkdownView) => this.exportAsHtml(editor, view)
+      editorCallback: (editor: Editor, view: MarkdownFileInfo) => this.exportAsHtml(editor, view)
     });
   }
 
-  async copyTextAndImages(editor: Editor, view: MarkdownView) {
+  async copyTextAndImages(editor: Editor, view: MarkdownFileInfo) {
     try {
       let content = editor.getSelection() || editor.getValue();
 
@@ -49,7 +49,7 @@ export default class CopyImageTextPlugin extends Plugin {
 
   private lastExportedHtmlPath: string | null = null;
 
-  async exportAsHtml(editor: Editor, view: MarkdownView) {
+  async exportAsHtml(editor: Editor, view: MarkdownFileInfo) {
     try {
       let content = editor.getSelection() || editor.getValue();
 
@@ -100,7 +100,7 @@ export default class CopyImageTextPlugin extends Plugin {
   }
 
 
-  async copyAsMarkdown(editor: Editor, view: MarkdownView) {
+  async copyAsMarkdown(editor: Editor, view: MarkdownFileInfo) {
     try {
       let content = editor.getSelection() || editor.getValue();
 
@@ -388,4 +388,3 @@ private highlightCodeLine(line: string): string {
       .replace(/#/g, "&#35;"); // 转义 # 符号，防止在代码块中被误识别为标题
   }
 }
-
