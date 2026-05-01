@@ -211,6 +211,8 @@ export default class CopyImageTextPlugin extends Plugin {
       return `<h${level} style="font-size: ${fontSize}px; font-weight: bold; margin: 10px 0;">${title}</h${level}>`;
     });
 
+    htmlContent = this.convertMarkdownListsToHtml(htmlContent);
+
     htmlContent = htmlContent
       .replace(/\n/g, '<br>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -232,6 +234,37 @@ export default class CopyImageTextPlugin extends Plugin {
 
     htmlContent = this.cleanAndFormatHtml(htmlContent);
     return `<div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; color: #333; line-height: 1.6;">${htmlContent}</div>`;
+  }
+
+  private convertMarkdownListsToHtml(html: string): string {
+    const listBlockRegex = /(^|\n)((?:[ \t]*(?:[-*+]\s+|\d+[.)]\s+).+(?:\n|$))+)/g;
+
+    return html.replace(listBlockRegex, (match, prefix, block) => {
+      const lines = block
+        .split('\n')
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0);
+
+      if (lines.length === 0) {
+        return match;
+      }
+
+      const isOrderedList = lines.every((line: string) => /^\d+[.)]\s+/.test(line));
+      const isUnorderedList = lines.every((line: string) => /^[-*+]\s+/.test(line));
+
+      if (!isOrderedList && !isUnorderedList) {
+        return match;
+      }
+
+      const tag = isOrderedList ? 'ol' : 'ul';
+      const itemRegex = isOrderedList ? /^\d+[.)]\s+/ : /^[-*+]\s+/;
+      const items = lines
+        .map((line: string) => line.replace(itemRegex, '').trim())
+        .map((item: string) => `<li style="margin: 4px 0;">${item}</li>`)
+        .join('');
+
+      return `${prefix}<${tag} style="margin: 8px 0 8px 24px; padding-left: 20px;">${items}</${tag}>`;
+    });
   }
 
   private cleanAndFormatHtml(html: string): string {
@@ -355,5 +388,4 @@ private highlightCodeLine(line: string): string {
       .replace(/#/g, "&#35;"); // 转义 # 符号，防止在代码块中被误识别为标题
   }
 }
-
 

@@ -76,4 +76,4 @@ https://github.com/jihaohaaaa/obsidian-copy-image-text/issues
 
 ## 版本
 
-当前版本: 1.1.9
+当前版本: 1.1.10

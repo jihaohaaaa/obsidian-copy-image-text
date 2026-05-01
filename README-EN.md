@@ -74,4 +74,4 @@ Maintained by jihaohaaaa.
 
 ## Version
 
-Current version: 1.1.9
+Current version: 1.1.10
