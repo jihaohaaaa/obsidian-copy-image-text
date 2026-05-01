@@ -127,4 +127,4 @@ Maintained by jihaohaaaa.
 
 ## Version
 
-Current version: 1.1.12
+Current version: 1.1.13
