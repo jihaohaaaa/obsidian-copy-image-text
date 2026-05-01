@@ -16,6 +16,33 @@
 
 ## 安装
 
+### 使用 BRAT 测试版安装
+
+1. 在 Obsidian 中安装并启用 `Obsidian42 - BRAT`。
+2. 打开命令面板，运行 `BRAT: Add a beta plugin for testing`。
+3. 输入仓库地址：
+
+```text
+https://github.com/jihaohaaaa/obsidian-copy-image-text
+```
+
+4. BRAT 会从 GitHub Release 安装 `main.js` 和 `manifest.json`。
+
+### 手动安装
+
+1. 下载最新 Release 中的 `main.js` 和 `manifest.json`。
+2. 放入你的 vault：
+
+```text
+<vault>/.obsidian/plugins/jihao-copy-image-text/
+```
+
+3. 重启 Obsidian 或重新加载插件，然后在第三方插件设置中启用。
+
+### 社区插件安装
+
+上架 Obsidian 社区插件市场后，可以通过以下方式安装：
+
 1. 打开 Obsidian 设置
 2. 进入"第三方插件"设置页面
 3. 确保"安全模式"已关闭
@@ -37,13 +64,39 @@
 
 ## 开发说明
 
-本插件使用 TypeScript 开发。如果您想贡献代码：
+本插件使用 TypeScript 开发，固定使用 Node.js 和 npm。推荐使用仓库中的 `.node-version` 和 `packageManager` 配置。
 
-1. 克隆仓库后，运行 `npm install` 安装依赖。
-2. 修改 TypeScript 源代码后，运行 `npm run build` 来编译。
-3. 编译后的 `main.js` 文件不包含在版本控制中，但需要手动包含在发行版中。
+常用命令：
 
-注意：发布新版本时，请确保先运行 `npm run build`，然后将生成的 `main.js` 文件添加到发行包中。
+```bash
+npm install
+npm run dev
+npm run build
+npm run check
+npm run format
+```
+
+安装到指定本地 vault：
+
+```bash
+npm run build
+npm run install:local -- "/path/to/your-vault"
+```
+
+更新版本号：
+
+```bash
+npm run version:bump -- 1.1.13
+npm install --package-lock-only
+```
+
+创建 GitHub Release 供 BRAT 安装：
+
+```bash
+npm run release:github -- 1.1.13
+```
+
+编译后的 `main.js` 文件不包含在版本控制中，但会作为 GitHub Release 附件发布。
 
 ## 注意事项
 

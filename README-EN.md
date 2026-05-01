@@ -25,6 +25,33 @@ Tip: You can set hotkeys for these two commands in Obsidian Settings under "Hotk
 
 ## Installation
 
+### BRAT beta installation
+
+1. Install and enable `Obsidian42 - BRAT` in Obsidian.
+2. Open the command palette and run `BRAT: Add a beta plugin for testing`.
+3. Enter the repository URL:
+
+```text
+https://github.com/jihaohaaaa/obsidian-copy-image-text
+```
+
+4. BRAT installs `main.js` and `manifest.json` from the GitHub Release.
+
+### Manual installation
+
+1. Download `main.js` and `manifest.json` from the latest Release.
+2. Place them in your vault:
+
+```text
+<vault>/.obsidian/plugins/jihao-copy-image-text/
+```
+
+3. Restart Obsidian or reload the plugin, then enable it in the community plugins settings.
+
+### Community plugin installation
+
+After the plugin is listed in the Obsidian community plugin directory, install it with:
+
 1. Open Obsidian Settings
 2. Go to "Third-party plugins" settings page
 3. Make sure "Safe mode" is turned off
@@ -35,13 +62,39 @@ Tip: You can set hotkeys for these two commands in Obsidian Settings under "Hotk
 
 ## Development Notes
 
-This plugin is developed using TypeScript. If you want to contribute:
+This plugin is developed with TypeScript and uses Node.js with npm. Prefer the repository `.node-version` and `packageManager` settings.
 
-1. After cloning the repository, run `npm install` to install dependencies.
-2. After modifying the TypeScript source code, run `npm run build` to compile.
-3. The compiled `main.js` file is not included in version control but needs to be manually included in releases.
+Common commands:
 
-Note: When publishing a new version, make sure to run `npm run build` first, then add the generated `main.js` file to the release package.
+```bash
+npm install
+npm run dev
+npm run build
+npm run check
+npm run format
+```
+
+Install to a specific local vault:
+
+```bash
+npm run build
+npm run install:local -- "/path/to/your-vault"
+```
+
+Bump the version:
+
+```bash
+npm run version:bump -- 1.1.13
+npm install --package-lock-only
+```
+
+Create a GitHub Release for BRAT:
+
+```bash
+npm run release:github -- 1.1.13
+```
+
+The compiled `main.js` file is not committed to version control, but it is uploaded as a GitHub Release asset.
 
 ## Notes
 

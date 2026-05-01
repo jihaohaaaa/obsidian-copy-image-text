@@ -1,15 +1,22 @@
-import { Editor, MarkdownFileInfo, Notice, Plugin, TFile, arrayBufferToBase64, Vault } from 'obsidian';
+import { Editor, MarkdownFileInfo, Notice, Plugin, arrayBufferToBase64 } from 'obsidian';
 import * as fs from 'fs/promises';
-import { Marked, Renderer, RendererThis, Tokens, TokenizerAndRendererExtension, TokenizerThis } from 'marked';
+import {
+  Marked,
+  Renderer,
+  RendererThis,
+  Tokens,
+  TokenizerAndRendererExtension,
+  TokenizerThis
+} from 'marked';
 const { dialog } = require('@electron/remote');
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
     this.addCommand({
       id: 'copy-text',
       name: '复制文本和图片(富文本)',
-      editorCallback: (editor: Editor, view: MarkdownFileInfo) => this.copyTextAndImages(editor, view)
+      editorCallback: (editor: Editor, view: MarkdownFileInfo) =>
+        this.copyTextAndImages(editor, view)
     });
-
 
     this.addCommand({
       id: 'copy-markdown',
@@ -26,22 +33,22 @@ export default class CopyImageTextPlugin extends Plugin {
 
   async copyTextAndImages(editor: Editor, view: MarkdownFileInfo) {
     try {
-      let content = editor.getSelection() || editor.getValue();
+      const content = editor.getSelection() || editor.getValue();
 
       if (!view.file) {
         new Notice('无法获取当前文件信息，复制可能不完整');
         return;
       }
 
-      const htmlContent = await this.convertToHtml(content, view.file);
-      
+      const htmlContent = await this.convertToHtml(content);
+
       await navigator.clipboard.write([
         new ClipboardItem({
           'text/html': new Blob([htmlContent], { type: 'text/html' }),
           'text/plain': new Blob([content], { type: 'text/plain' })
         })
       ]);
-      
+
       new Notice('内容已成功复制');
     } catch (error) {
       console.error('Copy Image Text: copy rich text failed', error);
@@ -49,18 +56,16 @@ export default class CopyImageTextPlugin extends Plugin {
     }
   }
 
-  private lastExportedHtmlPath: string | null = null;
-
   async exportAsHtml(editor: Editor, view: MarkdownFileInfo) {
     try {
-      let content = editor.getSelection() || editor.getValue();
+      const content = editor.getSelection() || editor.getValue();
 
       if (!view.file) {
         new Notice('无法获取当前文件信息，导出可能不完整');
         return;
       }
 
-      const htmlContent = await this.convertToHtml(content, view.file);
+      const htmlContent = await this.convertToHtml(content);
       const fileName = view.file.basename + '.html';
 
       const result = await dialog.showOpenDialog({
@@ -80,28 +85,15 @@ export default class CopyImageTextPlugin extends Plugin {
         exportFolderPath += '/';
       }
 
-      const filePath = `${exportFolderPath}${fileName}`;
-
-      const vaultRootPath = this.app.vault.getRoot().path;
-      
-      const normalizedExportPath = exportFolderPath.endsWith('/') ? exportFolderPath.slice(0, -1) : exportFolderPath;
-      const normalizedVaultRootPath = vaultRootPath.endsWith('/') ? vaultRootPath.slice(0, -1) : vaultRootPath;
-
-
-      const nodeFsPath = exportFolderPath.replace(/\//g, '\\') + fileName;
+      const nodeFsPath = `${exportFolderPath}${fileName}`;
       await fs.mkdir(exportFolderPath, { recursive: true }); // 确保目录存在
       await fs.writeFile(nodeFsPath, htmlContent);
       new Notice(`文件已成功导出到: ${nodeFsPath}`);
-      
-      this.lastExportedHtmlPath = filePath;
-
-
     } catch (error) {
       console.error('Copy Image Text: export HTML failed', error);
       new Notice(`导出HTML失败: ${this.getErrorMessage(error)}`);
     }
   }
-
 
   async copyAsMarkdown(editor: Editor, view: MarkdownFileInfo) {
     try {
@@ -112,7 +104,7 @@ export default class CopyImageTextPlugin extends Plugin {
         return;
       }
 
-      content = await this.replaceImageLinks(content, view.file);
+      content = await this.replaceImageLinks(content);
 
       await navigator.clipboard.writeText(content);
       new Notice('Markdown格式已复制');
@@ -122,44 +114,44 @@ export default class CopyImageTextPlugin extends Plugin {
     }
   }
 
-  async replaceImageLinks(content: string, file: TFile): Promise<string> {
+  async replaceImageLinks(content: string): Promise<string> {
     const imageRegex = /!\[\[(.*?)\]\]/g;
     let result = content;
-    
+
     for (const match of content.matchAll(imageRegex)) {
       const imagePath = match[1];
-      const imageFile = this.app.vault.getFiles().find(f => 
-        f.name.toLowerCase().includes(imagePath.split('/').pop()?.toLowerCase() || '')
-      );
+      const imageFile = this.app.vault
+        .getFiles()
+        .find((f) =>
+          f.name.toLowerCase().includes(imagePath.split('/').pop()?.toLowerCase() || '')
+        );
 
       if (imageFile) {
-        let absolutePath = this.app.vault.getResourcePath(imageFile)
+        let absolutePath = this.app.vault
+          .getResourcePath(imageFile)
           .replace(/^app:\/\/.*?\//, '')
           .replace(/\?.*$/, '')
           .replace(/\\/g, '/');
-        
+
         absolutePath = decodeURI(absolutePath);
-        
+
         const fileUrl = 'file:///' + absolutePath;
-                
-        result = result.replace(
-          `![[${imagePath}]]`, 
-          `![${imagePath}](${fileUrl})`
-        );
+
+        result = result.replace(`![[${imagePath}]]`, `![${imagePath}](${fileUrl})`);
       }
     }
-    
+
     return result;
   }
 
-  async convertToHtml(content: string, file: TFile): Promise<string> {
+  async convertToHtml(content: string): Promise<string> {
     const imageRegex = /!\[\[(.*?)\]\]/g;
     const externalImageRegex = /!\[.*?\]\((file:\/\/\/.+?)\)/g;
 
-    const internalImageReplacements = await Promise.all(Array.from(content.matchAll(imageRegex)).map(
-      match => this.replaceImageWithBase64(match[1], file)
-    ));
-    
+    const internalImageReplacements = await Promise.all(
+      Array.from(content.matchAll(imageRegex)).map((match) => this.replaceImageWithBase64(match[1]))
+    );
+
     let htmlContent = content;
     // 预处理：将连续的空行减少为单个空行，以美化生成的HTML
     htmlContent = htmlContent.replace(/\n\s*\n/g, '\n\n');
@@ -167,13 +159,21 @@ export default class CopyImageTextPlugin extends Plugin {
       htmlContent = htmlContent.replace(original, replacement);
     });
 
-    const externalImageReplacements = await Promise.all(Array.from(htmlContent.matchAll(externalImageRegex)).map(
-      match => this.replaceExternalImageWithBase64(match[1], match[0]) as Promise<{ original: string, replacement: string }>
-    ));
+    const externalImageReplacements = await Promise.all(
+      Array.from(htmlContent.matchAll(externalImageRegex)).map(
+        (match) =>
+          this.replaceExternalImageWithBase64(match[1], match[0]) as Promise<{
+            original: string;
+            replacement: string;
+          }>
+      )
+    );
 
-    externalImageReplacements.forEach(( { original, replacement }: { original: string, replacement: string } ) => {
-      htmlContent = htmlContent.replace(original, replacement);
-    });
+    externalImageReplacements.forEach(
+      ({ original, replacement }: { original: string; replacement: string }) => {
+        htmlContent = htmlContent.replace(original, replacement);
+      }
+    );
 
     const markdownParser = new Marked({
       async: false,
@@ -192,13 +192,13 @@ export default class CopyImageTextPlugin extends Plugin {
     const renderer = new Renderer();
     const plugin = this;
 
-    renderer.heading = function(this: Renderer, { tokens, depth }: Tokens.Heading) {
-      const fontSize = 28 - (depth * 2);
+    renderer.heading = function (this: Renderer, { tokens, depth }: Tokens.Heading) {
+      const fontSize = 28 - depth * 2;
       return `<h${depth} style="font-size: ${fontSize}px; font-weight: bold; margin: 10px 0;">${this.parser.parseInline(tokens)}</h${depth}>`;
     };
 
     renderer.hr = () => '<hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">';
-    renderer.link = function(this: Renderer, { href, title, tokens }: Tokens.Link) {
+    renderer.link = function (this: Renderer, { href, title, tokens }: Tokens.Link) {
       const titleAttr = title ? ` title="${plugin.escapeHtml(title)}"` : '';
       return `<a href="${plugin.escapeHtml(href)}"${titleAttr} style="color: #576b95; text-decoration: none;">${this.parser.parseInline(tokens)}</a>`;
     };
@@ -206,17 +206,20 @@ export default class CopyImageTextPlugin extends Plugin {
       const titleAttr = title ? ` title="${plugin.escapeHtml(title)}"` : '';
       return `<img src="${plugin.escapeHtml(href)}" alt="${plugin.escapeHtml(text)}"${titleAttr} style="max-width: 100%;">`;
     };
-    renderer.list = function(this: Renderer, { ordered, start, items }: Tokens.List) {
+    renderer.list = function (this: Renderer, { ordered, start, items }: Tokens.List) {
       const tag = ordered ? 'ol' : 'ul';
       const startAttr = ordered && start !== 1 && start !== '' ? ` start="${start}"` : '';
       const body = items.map((item) => this.listitem(item)).join('');
       return `<${tag}${startAttr} style="margin: 8px 0 8px 24px; padding-left: 20px;">${body}</${tag}>`;
     };
-    renderer.listitem = function(this: Renderer, item: Tokens.ListItem) {
-      const checkbox = item.task ? `<input type="checkbox"${item.checked ? ' checked' : ''} disabled> ` : '';
+    renderer.listitem = function (this: Renderer, item: Tokens.ListItem) {
+      const checkbox = item.task
+        ? `<input type="checkbox"${item.checked ? ' checked' : ''} disabled> `
+        : '';
       return `<li style="margin: 4px 0;">${checkbox}${this.parser.parse(item.tokens)}</li>`;
     };
-    renderer.codespan = ({ text }: Tokens.Codespan) => `<code style="background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px;">${plugin.escapeHtml(text)}</code>`;
+    renderer.codespan = ({ text }: Tokens.Codespan) =>
+      `<code style="background-color: #f0f0f0; padding: 2px 4px; border-radius: 3px;">${plugin.escapeHtml(text)}</code>`;
     renderer.code = ({ text, lang }: Tokens.Code) => {
       const language = lang || 'text';
       return `<pre data-lang="${plugin.escapeHtml(language)}" style="background-color: #f6f8fa; padding: 12px; border-radius: 4px; overflow-x: auto;"><code>${plugin.escapeHtml(text)}</code></pre>`;
@@ -265,12 +268,14 @@ export default class CopyImageTextPlugin extends Plugin {
     return html;
   }
 
-  async replaceImageWithBase64(imagePath: string, file: TFile): Promise<{ original: string, replacement: string }> {
+  async replaceImageWithBase64(
+    imagePath: string
+  ): Promise<{ original: string; replacement: string }> {
     try {
       const fileName = imagePath.split('/').pop() || imagePath;
-      const imageFile = this.app.vault.getFiles().find(f =>
-        f.name.toLowerCase().includes(fileName.toLowerCase())
-      );
+      const imageFile = this.app.vault
+        .getFiles()
+        .find((f) => f.name.toLowerCase().includes(fileName.toLowerCase()));
 
       if (!imageFile) {
         return { original: `![[${imagePath}]]`, replacement: `[图片未找到: ${imagePath}]` };
@@ -289,12 +294,15 @@ export default class CopyImageTextPlugin extends Plugin {
         original: `![[${imagePath}]]`,
         replacement: `<img src="data:${mimeType};base64,${base64}" alt="${imagePath}" style="max-width: 100%;">`
       };
-    } catch (error) {
+    } catch (_error) {
       return { original: `![[${imagePath}]]`, replacement: `[图片处理错误: ${imagePath}]` };
     }
   }
 
-  async replaceExternalImageWithBase64(imagePath: string, original?: string): Promise<{ original: string, replacement: string }> {
+  async replaceExternalImageWithBase64(
+    imagePath: string,
+    original?: string
+  ): Promise<{ original: string; replacement: string }> {
     try {
       let filePath = imagePath.replace(/^file:\/\/\//, '');
 
@@ -310,12 +318,15 @@ export default class CopyImageTextPlugin extends Plugin {
         original: original || `![](${imagePath})`,
         replacement: `<img src="data:${mimeType};base64,${base64}" alt="${imagePath}" style="max-width: 100%;">`
       };
-    } catch (error) {
-      return { original: original || `![](${imagePath})`, replacement: `[外部图片处理错误: ${imagePath}]` };
+    } catch (_error) {
+      return {
+        original: original || `![](${imagePath})`,
+        replacement: `[外部图片处理错误: ${imagePath}]`
+      };
     }
   }
 
-  getMimeType(filename: string): string {
+  private getMimeType(filename: string): string {
     const ext = filename.split('.').pop()?.toLowerCase();
     switch (ext) {
       case 'jpg':
@@ -346,42 +357,12 @@ export default class CopyImageTextPlugin extends Plugin {
     return '未知错误，请查看控制台日志';
   }
 
-private getLanguageFromCodeBlock(codeBlockHeader: string): string {
-    const match = codeBlockHeader.match(/```(\w+)?/);
-    return match && match[1] ? match[1] : 'js'; // 默认语言为js
-  }
-private highlightCodeLine(line: string): string {
-    // 替换开头的空格为 &nbsp;
-    let processedLine = line.replace(/^( +)/g, (match) => {
-      return match.replace(/ /g, '&nbsp;');
-    });
-
-    // 替换行内连续的两个或更多空格为 &nbsp;
-    processedLine = processedLine.replace(/ {2,}/g, (match) => {
-      return match.replace(/ /g, '&nbsp;');
-    });
-
-    // 简化语法高亮：只处理字符串
-    processedLine = processedLine.replace(/(["'`])(.*?)\1/g, (match, quote, content) => {
-      // 对字符串内容进行HTML转义，但不转义引号本身
-      const escapedContent = this.escapeHtml(content);
-      return `${quote}<span class="code-snippet__string">${escapedContent}</span>${quote}`;
-    });
-
-    // 对整行进行HTML转义，确保所有特殊字符都被正确处理
-    // 注意：这里需要确保在字符串高亮之后进行，避免二次转义
-
-    // 恢复之前转义的引号，因为它们是字符串高亮的一部分
-    processedLine = processedLine.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&grave;/g, '`');
-
-    return processedLine;
-  }
   private escapeHtml(unsafe: string): string {
     return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/#/g, "&#35;"); // 转义 # 符号，防止在代码块中被误识别为标题
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/#/g, '&#35;'); // 转义 # 符号，防止在代码块中被误识别为标题
   }
 }
