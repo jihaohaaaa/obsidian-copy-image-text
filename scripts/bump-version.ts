@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const targetVersion = process.argv[2];
@@ -49,5 +50,21 @@ const readmeEn = readFileSync('README-EN.md', 'utf8').replace(
   `$1${targetVersion}`
 );
 writeFileSync('README-EN.md', readmeEn);
+
+execFileSync(
+  'npm',
+  [
+    'exec',
+    'prettier',
+    '--',
+    '--write',
+    'package.json',
+    'manifest.json',
+    'versions.json',
+    'README.md',
+    'README-EN.md'
+  ],
+  { stdio: 'inherit' }
+);
 
 console.log(`Updated plugin version to ${targetVersion}`);
