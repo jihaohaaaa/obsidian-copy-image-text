@@ -1,4 +1,4 @@
-import { Editor, MarkdownFileInfo, Notice, Plugin, arrayBufferToBase64 } from 'obsidian';
+import { Editor, MarkdownFileInfo, Menu, Notice, Plugin, arrayBufferToBase64 } from 'obsidian';
 import * as fs from 'fs/promises';
 import {
   Marked,
@@ -28,6 +28,37 @@ export default class CopyImageTextPlugin extends Plugin {
       id: 'export-html',
       name: '导出为HTML文件',
       editorCallback: (editor: Editor, view: MarkdownFileInfo) => this.exportAsHtml(editor, view)
+    });
+
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu, editor, info) =>
+        this.addEditorContextMenuItems(menu, editor, info)
+      )
+    );
+  }
+
+  private addEditorContextMenuItems(menu: Menu, editor: Editor, info: MarkdownFileInfo) {
+    menu.addSeparator();
+
+    menu.addItem((item) => {
+      item
+        .setTitle('复制文本和图片(富文本)')
+        .setIcon('copy')
+        .onClick(() => this.copyTextAndImages(editor, info));
+    });
+
+    menu.addItem((item) => {
+      item
+        .setTitle('复制为Markdown格式')
+        .setIcon('clipboard-copy')
+        .onClick(() => this.copyAsMarkdown(editor, info));
+    });
+
+    menu.addItem((item) => {
+      item
+        .setTitle('导出为HTML文件')
+        .setIcon('file-output')
+        .onClick(() => this.exportAsHtml(editor, info));
     });
   }
 
