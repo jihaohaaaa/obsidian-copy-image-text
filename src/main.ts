@@ -1,4 +1,13 @@
-import { Editor, MarkdownFileInfo, Menu, Notice, Plugin, arrayBufferToBase64 } from 'obsidian';
+import {
+  Editor,
+  MarkdownFileInfo,
+  Menu,
+  Notice,
+  Plugin,
+  TAbstractFile,
+  TFile,
+  arrayBufferToBase64
+} from 'obsidian';
 import * as fs from 'fs/promises';
 import {
   Marked,
@@ -8,7 +17,7 @@ import {
   TokenizerAndRendererExtension,
   TokenizerThis
 } from 'marked';
-const { dialog } = require('@electron/remote');
+
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
     this.addCommand({
@@ -18,22 +27,14 @@ export default class CopyImageTextPlugin extends Plugin {
         this.copyTextAndImages(editor, view)
     });
 
-    this.addCommand({
-      id: 'copy-markdown',
-      name: '复制为Markdown格式',
-      editorCallback: (editor: Editor, view: MarkdownFileInfo) => this.copyAsMarkdown(editor, view)
-    });
-
-    this.addCommand({
-      id: 'export-html',
-      name: '导出为HTML文件',
-      editorCallback: (editor: Editor, view: MarkdownFileInfo) => this.exportAsHtml(editor, view)
-    });
-
     this.registerEvent(
       this.app.workspace.on('editor-menu', (menu, editor, info) =>
         this.addEditorContextMenuItems(menu, editor, info)
       )
+    );
+
+    this.registerEvent(
+      this.app.workspace.on('file-menu', (menu, file) => this.addFileContextMenuItems(menu, file))
     );
   }
 
@@ -46,19 +47,20 @@ export default class CopyImageTextPlugin extends Plugin {
         .setIcon('copy')
         .onClick(() => this.copyTextAndImages(editor, info));
     });
+  }
+
+  private addFileContextMenuItems(menu: Menu, file: TAbstractFile) {
+    if (!(file instanceof TFile) || file.extension !== 'md') {
+      return;
+    }
+
+    menu.addSeparator();
 
     menu.addItem((item) => {
       item
-        .setTitle('复制为Markdown格式')
-        .setIcon('clipboard-copy')
-        .onClick(() => this.copyAsMarkdown(editor, info));
-    });
-
-    menu.addItem((item) => {
-      item
-        .setTitle('导出为HTML文件')
-        .setIcon('file-output')
-        .onClick(() => this.exportAsHtml(editor, info));
+        .setTitle('复制文本和图片(富文本)')
+        .setIcon('copy')
+        .onClick(() => this.copyFileAsRichText(file));
     });
   }
 
@@ -71,15 +73,7 @@ export default class CopyImageTextPlugin extends Plugin {
         return;
       }
 
-      const htmlContent = await this.convertToHtml(content);
-
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          'text/html': new Blob([htmlContent], { type: 'text/html' }),
-          'text/plain': new Blob([content], { type: 'text/plain' })
-        })
-      ]);
-
+      await this.writeRichTextToClipboard(content);
       new Notice('内容已成功复制');
     } catch (error) {
       console.error('Copy Image Text: copy rich text failed', error);
@@ -87,92 +81,26 @@ export default class CopyImageTextPlugin extends Plugin {
     }
   }
 
-  async exportAsHtml(editor: Editor, view: MarkdownFileInfo) {
+  private async copyFileAsRichText(file: TFile) {
     try {
-      const content = editor.getSelection() || editor.getValue();
-
-      if (!view.file) {
-        new Notice('无法获取当前文件信息，导出可能不完整');
-        return;
-      }
-
-      const htmlContent = await this.convertToHtml(content);
-      const fileName = view.file.basename + '.html';
-
-      const result = await dialog.showOpenDialog({
-        properties: ['openDirectory', 'createDirectory'],
-        title: '选择HTML导出目录',
-        defaultPath: view.file.parent?.path || ''
-      });
-
-      if (result.canceled || result.filePaths.length === 0) {
-        new Notice('已取消导出。');
-        return;
-      }
-
-      let exportFolderPath = result.filePaths[0];
-
-      if (exportFolderPath && !exportFolderPath.endsWith('/') && exportFolderPath !== '/') {
-        exportFolderPath += '/';
-      }
-
-      const nodeFsPath = `${exportFolderPath}${fileName}`;
-      await fs.mkdir(exportFolderPath, { recursive: true }); // 确保目录存在
-      await fs.writeFile(nodeFsPath, htmlContent);
-      new Notice(`文件已成功导出到: ${nodeFsPath}`);
+      const content = await this.app.vault.read(file);
+      await this.writeRichTextToClipboard(content);
+      new Notice('内容已成功复制');
     } catch (error) {
-      console.error('Copy Image Text: export HTML failed', error);
-      new Notice(`导出HTML失败: ${this.getErrorMessage(error)}`);
-    }
-  }
-
-  async copyAsMarkdown(editor: Editor, view: MarkdownFileInfo) {
-    try {
-      let content = editor.getSelection() || editor.getValue();
-
-      if (!view.file) {
-        new Notice('无法获取当前文件信息复制可能不完整');
-        return;
-      }
-
-      content = await this.replaceImageLinks(content);
-
-      await navigator.clipboard.writeText(content);
-      new Notice('Markdown格式已复制');
-    } catch (error) {
-      console.error('Copy Image Text: copy Markdown failed', error);
+      console.error('Copy Image Text: copy file rich text failed', error);
       new Notice(`复制失败: ${this.getErrorMessage(error)}`);
     }
   }
 
-  async replaceImageLinks(content: string): Promise<string> {
-    const imageRegex = /!\[\[(.*?)\]\]/g;
-    let result = content;
+  private async writeRichTextToClipboard(content: string) {
+    const htmlContent = await this.convertToHtml(content);
 
-    for (const match of content.matchAll(imageRegex)) {
-      const imagePath = match[1];
-      const imageFile = this.app.vault
-        .getFiles()
-        .find((f) =>
-          f.name.toLowerCase().includes(imagePath.split('/').pop()?.toLowerCase() || '')
-        );
-
-      if (imageFile) {
-        let absolutePath = this.app.vault
-          .getResourcePath(imageFile)
-          .replace(/^app:\/\/.*?\//, '')
-          .replace(/\?.*$/, '')
-          .replace(/\\/g, '/');
-
-        absolutePath = decodeURI(absolutePath);
-
-        const fileUrl = 'file:///' + absolutePath;
-
-        result = result.replace(`![[${imagePath}]]`, `![${imagePath}](${fileUrl})`);
-      }
-    }
-
-    return result;
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([htmlContent], { type: 'text/html' }),
+        'text/plain': new Blob([content], { type: 'text/plain' })
+      })
+    ]);
   }
 
   async convertToHtml(content: string): Promise<string> {

@@ -1,14 +1,12 @@
 # 复制图文增强版 (Copy Image Text Plus)
 
-Copy Image Text Plus is an Obsidian plugin that allows users to copy note content, including text and local images, to the clipboard while maintaining formatting. It can also export note content as HTML files.
+Copy Image Text Plus is an Obsidian plugin that allows users to copy note content, including text and local images, as rich text while maintaining formatting.
 
 ## Features
 
-- Supports two copy modes:
-  - Copy text and images (rich text format): Suitable for Word, WeChat public account editor, etc.
-  - Copy as Markdown format: Suitable for other Markdown editors
-- Automatically convert Obsidian images to inline base64 format (rich text mode) or standard Markdown image links (Markdown mode)
-- **New:** Supports exporting note content to HTML files for easy viewing or sharing in browsers.
+- Copy text and images as rich text: suitable for Word, WeChat public account editor, etc.
+- Automatically convert Obsidian images to inline base64 format
+- Supports local external image links in `![](file:///...)` format and converts them to inline base64 images.
 - Maintain Markdown formatting, including headers, bold, italic, code blocks, etc.
 - Specially optimized for display in WeChat public account editor
 
@@ -16,12 +14,10 @@ Copy Image Text Plus is an Obsidian plugin that allows users to copy note conten
 
 1. Open a note in Obsidian
 2. Select the text you want to copy (if no selection, the entire document will be copied)
-3. Use the command palette to execute one of the following commands:
-   - "Copy text and images (rich text)": Copy as rich text format
-   - "Copy as Markdown format": Copy as standard Markdown format
+3. Use the command palette, editor context menu, or Markdown file context menu to run "Copy text and images (rich text)"
 4. Paste the content in the target application
 
-Tip: You can set hotkeys for these two commands in Obsidian Settings under "Hotkeys" for more convenient use.
+Tip: You can set a hotkey for this command in Obsidian Settings under "Hotkeys" for more convenient use.
 
 ## Installation
 
@@ -101,13 +97,6 @@ The compiled `main.js` file is not committed to version control, but it is uploa
 - Image size is limited to 10MB, images exceeding this size will not be copied
 - Some special formatting may not be fully preserved in certain target applications
 - Please ensure you have the right to copy and share the images contained in your notes
-- Tips for using Markdown format copy:
-  - If you want to publish your document to GitHub or blog platforms, follow these steps:
-    1. Use an editor that supports image bed upload (e.g., Typora + PicList)
-    2. Upload the images in your document to an image bed (tested in Typora)
-    3. This will convert your images to online links
-    4. Then you can simply copy the entire document, as all images are now online links
-  - Obsidian might have similar image bed upload plugins available (untested)
 
 ## Feedback and Support
 
