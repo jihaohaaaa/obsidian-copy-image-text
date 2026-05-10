@@ -116,4 +116,4 @@ Maintained by jihaohaaaa.
 
 ## Version
 
-Current version: 1.1.17
+Current version: 1.1.18
