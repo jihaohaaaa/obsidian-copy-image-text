@@ -230,32 +230,39 @@ export default class CopyImageTextPlugin extends Plugin {
   async replaceImageWithBase64(
     imagePath: string
   ): Promise<{ original: string; replacement: string }> {
+    const original = `![[${imagePath}]]`;
+    const normalizedImagePath = this.normalizeInternalImagePath(imagePath);
+
     try {
-      const fileName = imagePath.split('/').pop() || imagePath;
+      const fileName = normalizedImagePath.split('/').pop() || normalizedImagePath;
       const imageFile = this.app.vault
         .getFiles()
         .find((f) => f.name.toLowerCase().includes(fileName.toLowerCase()));
 
       if (!imageFile) {
-        return { original: `![[${imagePath}]]`, replacement: `[图片未找到: ${imagePath}]` };
+        return { original, replacement: `[图片未找到: ${normalizedImagePath}]` };
       }
 
       const stat = await this.app.vault.adapter.stat(imageFile.path);
       if (stat && stat.size > 10 * 1024 * 1024) {
-        return { original: `![[${imagePath}]]`, replacement: `[图片文件过大: ${imagePath}]` };
+        return { original, replacement: `[图片文件过大: ${normalizedImagePath}]` };
       }
 
       const imageArrayBuffer = await this.app.vault.readBinary(imageFile);
       const base64 = arrayBufferToBase64(imageArrayBuffer);
-      const mimeType = this.getMimeType(imagePath);
+      const mimeType = this.getMimeType(normalizedImagePath);
 
       return {
-        original: `![[${imagePath}]]`,
-        replacement: `<img src="data:${mimeType};base64,${base64}" alt="${imagePath}" style="max-width: 100%;">`
+        original,
+        replacement: `<img src="data:${mimeType};base64,${base64}" alt="${normalizedImagePath}" style="max-width: 100%;">`
       };
     } catch (_error) {
-      return { original: `![[${imagePath}]]`, replacement: `[图片处理错误: ${imagePath}]` };
+      return { original, replacement: `[图片处理错误: ${normalizedImagePath}]` };
     }
+  }
+
+  private normalizeInternalImagePath(imagePath: string): string {
+    return imagePath.split('|')[0].trim();
   }
 
   async replaceExternalImageWithBase64(
