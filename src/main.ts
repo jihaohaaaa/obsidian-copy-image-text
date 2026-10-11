@@ -1,22 +1,22 @@
-import {
-  Editor,
-  MarkdownFileInfo,
-  Menu,
-  Notice,
-  Plugin,
-  TAbstractFile,
-  TFile,
-  arrayBufferToBase64
-} from 'obsidian';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import {
   Marked,
   Renderer,
-  RendererThis,
-  Tokens,
-  TokenizerAndRendererExtension,
-  TokenizerThis
+  type RendererThis,
+  type TokenizerAndRendererExtension,
+  type TokenizerThis,
+  type Tokens
 } from 'marked';
+import {
+  arrayBufferToBase64,
+  type Editor,
+  type MarkdownFileInfo,
+  type Menu,
+  Notice,
+  Plugin,
+  type TAbstractFile,
+  TFile
+} from 'obsidian';
 
 export default class CopyImageTextPlugin extends Plugin {
   async onload() {
@@ -108,7 +108,9 @@ export default class CopyImageTextPlugin extends Plugin {
     const externalImageRegex = /!\[.*?\]\((file:\/\/\/.+?)\)/g;
 
     const internalImageReplacements = await Promise.all(
-      Array.from(content.matchAll(imageRegex)).map((match) => this.replaceImageWithBase64(match[1]))
+      Array.from(content.matchAll(imageRegex)).map((match) =>
+        this.replaceImageWithBase64(match[1] ?? '')
+      )
     );
 
     let htmlContent = content;
@@ -121,7 +123,7 @@ export default class CopyImageTextPlugin extends Plugin {
     const externalImageReplacements = await Promise.all(
       Array.from(htmlContent.matchAll(externalImageRegex)).map(
         (match) =>
-          this.replaceExternalImageWithBase64(match[1], match[0]) as Promise<{
+          this.replaceExternalImageWithBase64(match[1] ?? '', match[0]) as Promise<{
             original: string;
             replacement: string;
           }>
@@ -191,7 +193,7 @@ export default class CopyImageTextPlugin extends Plugin {
     return {
       name: 'highlight',
       level: 'inline' as const,
-      start(src: string): number | void {
+      start(src: string): number | undefined {
         const index = src.indexOf('==');
         return index >= 0 ? index : undefined;
       },
@@ -204,8 +206,8 @@ export default class CopyImageTextPlugin extends Plugin {
         return {
           type: 'highlight',
           raw: match[0],
-          text: match[1],
-          tokens: this.lexer.inlineTokens(match[1])
+          text: match[1] ?? '',
+          tokens: this.lexer.inlineTokens(match[1] ?? '')
         };
       },
       renderer(this: RendererThis, token: Tokens.Generic) {
@@ -262,7 +264,7 @@ export default class CopyImageTextPlugin extends Plugin {
   }
 
   private normalizeInternalImagePath(imagePath: string): string {
-    return imagePath.split('|')[0].trim();
+    return (imagePath.split('|')[0] ?? '').trim();
   }
 
   async replaceExternalImageWithBase64(

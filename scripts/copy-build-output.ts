@@ -1,11 +1,21 @@
-import { copyFileSync, existsSync } from 'node:fs';
+import { copyFile } from 'node:fs/promises';
 
-const outputFile = 'dist/main.js';
+async function main(): Promise<void> {
+  const outputFile = 'dist/main.js';
 
-if (!existsSync(outputFile)) {
-  console.error(`Missing ${outputFile}. Run vite build first.`);
-  process.exit(1);
+  try {
+    await copyFile(outputFile, 'main.js');
+    console.log('Copied dist/main.js to main.js');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      console.error(`Missing ${outputFile}. Run vite build first.`);
+      process.exit(1);
+    }
+    throw error;
+  }
 }
 
-copyFileSync(outputFile, 'main.js');
-console.log('Copied dist/main.js to main.js');
+main().catch((err: unknown) => {
+  console.error(err);
+  process.exit(1);
+});

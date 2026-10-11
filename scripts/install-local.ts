@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { copyFile, mkdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const vaultPath = process.argv[2] || process.env.OBSIDIAN_VAULT_PATH;
@@ -13,25 +13,37 @@ type ManifestJson = {
   version: string;
 };
 
-const manifest = JSON.parse(readFileSync('manifest.json', 'utf8')) as ManifestJson;
-const pluginDir = resolve(vaultPath, '.obsidian', 'plugins', manifest.id);
+async function main(): Promise<void> {
+  const manifest = JSON.parse(await readFile('manifest.json', 'utf8')) as ManifestJson;
+  const pluginDir = resolve(vaultPath as string, '.obsidian', 'plugins', manifest.id);
 
-const requiredAssets = ['main.js', 'manifest.json'];
-for (const asset of requiredAssets) {
-  if (!existsSync(asset)) {
-    console.error(`Missing ${asset}. Run pnpm run build first.`);
-    process.exit(1);
+  await mkdir(pluginDir, { recursive: true });
+
+  const requiredAssets = ['main.js', 'manifest.json'];
+  for (const asset of requiredAssets) {
+    try {
+      await copyFile(asset, resolve(pluginDir, asset));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        console.error(`Missing ${asset}. Run pnpm run build first.`);
+        process.exit(1);
+      }
+      throw error;
+    }
   }
+
+  try {
+    await copyFile('styles.css', resolve(pluginDir, 'styles.css'));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error;
+    }
+  }
+
+  console.log(`Installed ${manifest.id} ${manifest.version} to ${pluginDir}`);
 }
 
-mkdirSync(pluginDir, { recursive: true });
-
-for (const asset of requiredAssets) {
-  copyFileSync(asset, resolve(pluginDir, asset));
-}
-
-if (existsSync('styles.css')) {
-  copyFileSync('styles.css', resolve(pluginDir, 'styles.css'));
-}
-
-console.log(`Installed ${manifest.id} ${manifest.version} to ${pluginDir}`);
+main().catch((err: unknown) => {
+  console.error(err);
+  process.exit(1);
+});

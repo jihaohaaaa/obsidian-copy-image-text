@@ -32,7 +32,8 @@ export default defineConfig({
         '@lezer/common',
         '@lezer/highlight',
         '@lezer/lr',
-        ...builtinModules
+        ...builtinModules,
+        ...builtinModules.map((m) => `node:${m}`)
       ],
       output: {
         banner,
