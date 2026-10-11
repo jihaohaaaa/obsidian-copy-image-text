@@ -59,36 +59,36 @@ https://github.com/jihaohaaaa/obsidian-copy-image-text
 
 ## 开发说明
 
-本插件使用 TypeScript 开发，固定使用 Node.js 和 npm。推荐使用仓库中的 `.node-version` 和 `packageManager` 配置。打包器使用 Vite。
+本插件使用 TypeScript 开发，使用 Node.js 和 pnpm。推荐使用仓库中的 `.node-version` 和 `packageManager` 配置。打包器使用 Vite。
 
 常用命令：
 
 ```bash
-npm install
-npm run dev
-npm run build
-npm run check
-npm run format
+pnpm install
+pnpm run dev
+pnpm run build
+pnpm run check
+pnpm run format
 ```
 
 安装到指定本地 vault：
 
 ```bash
-npm run build
-npm run install:local -- "/path/to/your-vault"
+pnpm run build
+pnpm run install:local "/path/to/your-vault"
 ```
 
 更新版本号：
 
 ```bash
-npm run version:bump -- 1.1.13
-npm install --package-lock-only
+pnpm run version:bump 1.1.18
+pnpm install --lockfile-only
 ```
 
 创建 GitHub Release 供 BRAT 安装：
 
 ```bash
-npm run release:github -- 1.1.13
+pnpm run release:github 1.1.18
 ```
 
 编译后的 `main.js` 文件不包含在版本控制中，但会作为 GitHub Release 附件发布。

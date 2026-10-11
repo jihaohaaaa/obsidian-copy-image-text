@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 const targetVersion = process.argv[2];
 
 if (!targetVersion || !/^\d+\.\d+\.\d+$/.test(targetVersion)) {
-  console.error('Usage: npm run release:github -- <x.y.z>');
+  console.error('Usage: pnpm run release:github <x.y.z>');
   process.exit(1);
 }
 
@@ -39,9 +39,9 @@ if (status) {
   process.exit(1);
 }
 
-run('npm', ['run', 'version:bump', '--', targetVersion]);
-run('npm', ['install', '--package-lock-only', '--include=dev', '--ignore-scripts']);
-run('npm', ['run', 'build']);
+run('pnpm', ['run', 'version:bump', targetVersion]);
+run('pnpm', ['install', '--lockfile-only', '--ignore-scripts']);
+run('pnpm', ['run', 'build']);
 
 for (const asset of ['main.js', 'manifest.json']) {
   if (!existsSync(asset)) {
@@ -55,7 +55,7 @@ run('git', [
   'README-EN.md',
   'README.md',
   'manifest.json',
-  'package-lock.json',
+  'pnpm-lock.yaml',
   'package.json',
   'versions.json'
 ]);

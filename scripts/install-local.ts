@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 const vaultPath = process.argv[2] || process.env.OBSIDIAN_VAULT_PATH;
 
 if (!vaultPath) {
-  console.error('Usage: npm run install:local -- <vault-path>');
+  console.error('Usage: pnpm run install:local <vault-path>');
   process.exit(1);
 }
 
@@ -19,7 +19,7 @@ const pluginDir = resolve(vaultPath, '.obsidian', 'plugins', manifest.id);
 const requiredAssets = ['main.js', 'manifest.json'];
 for (const asset of requiredAssets) {
   if (!existsSync(asset)) {
-    console.error(`Missing ${asset}. Run npm run build first.`);
+    console.error(`Missing ${asset}. Run pnpm run build first.`);
     process.exit(1);
   }
 }

@@ -58,36 +58,36 @@ After the plugin is listed in the Obsidian community plugin directory, install i
 
 ## Development Notes
 
-This plugin is developed with TypeScript and uses Node.js with npm. Prefer the repository `.node-version` and `packageManager` settings. The bundler is Vite.
+This plugin is developed with TypeScript and uses Node.js with pnpm. Prefer the repository `.node-version` and `packageManager` settings. The bundler is Vite.
 
 Common commands:
 
 ```bash
-npm install
-npm run dev
-npm run build
-npm run check
-npm run format
+pnpm install
+pnpm run dev
+pnpm run build
+pnpm run check
+pnpm run format
 ```
 
 Install to a specific local vault:
 
 ```bash
-npm run build
-npm run install:local -- "/path/to/your-vault"
+pnpm run build
+pnpm run install:local "/path/to/your-vault"
 ```
 
 Bump the version:
 
 ```bash
-npm run version:bump -- 1.1.13
-npm install --package-lock-only
+pnpm run version:bump 1.1.18
+pnpm install --lockfile-only
 ```
 
 Create a GitHub Release for BRAT:
 
 ```bash
-npm run release:github -- 1.1.13
+pnpm run release:github 1.1.18
 ```
 
 The compiled `main.js` file is not committed to version control, but it is uploaded as a GitHub Release asset.

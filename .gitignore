@@ -25,6 +25,9 @@ npm-debug.log*
 # 忽略 yarn 的错误日志
 yarn-error.log
 
+# 忽略 pnpm 的调试日志
+pnpm-debug.log*
+
 # 忽略 TypeScript 编译输出
 *.js.map
 dist/

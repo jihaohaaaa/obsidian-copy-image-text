@@ -8,7 +8,7 @@
 
 ### 步骤1：修改 `convertToHtml` 方法中的代码块处理逻辑
 
-- **识别代码块语言**：从Markdown代码块的开头（例如 ````javascript` 中的 `javascript`）提取语言类型。如果未指定语言，可以默认使用 `js` 或其他通用名称。
+- **识别代码块语言**：从Markdown代码块的开头（例如 ````javascript`中的`javascript`）提取语言类型。如果未指定语言，可以默认使用 `js` 或其他通用名称。
 - **构建外层 `<section>` 标签**：
   - 添加 `class="code-snippet__fix code-snippet__<lang>"`，其中 `<lang>` 是识别到的语言。
 - **构建行号 `<ul>` 标签**：

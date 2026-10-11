@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const targetVersion = process.argv[2];
 
 if (!targetVersion || !/^\d+\.\d+\.\d+$/.test(targetVersion)) {
-  console.error('Usage: npm run version:bump -- <x.y.z>');
+  console.error('Usage: pnpm run version:bump <x.y.z>');
   process.exit(1);
 }
 
@@ -52,11 +52,10 @@ const readmeEn = readFileSync('README-EN.md', 'utf8').replace(
 writeFileSync('README-EN.md', readmeEn);
 
 execFileSync(
-  'npm',
+  'pnpm',
   [
     'exec',
     'prettier',
-    '--',
     '--write',
     'package.json',
     'manifest.json',

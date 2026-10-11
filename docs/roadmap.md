@@ -6,7 +6,7 @@
   - `vite.config.ts`
   - `eslint.config.ts`
   - `scripts/*.ts`
-- Keep Node.js and npm as the fixed runtime/toolchain.
+- Keep Node.js and pnpm as the fixed runtime/toolchain.
 - Preserve the current Obsidian plugin output contract:
   - release asset: `main.js`
   - release asset: `manifest.json`
