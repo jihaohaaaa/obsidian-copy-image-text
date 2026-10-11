@@ -7,6 +7,7 @@ import {
   type TokenizerThis,
   type Tokens
 } from 'marked';
+import mime from 'mime';
 import {
   arrayBufferToBase64,
   type Editor,
@@ -295,22 +296,7 @@ export default class CopyImageTextPlugin extends Plugin {
   }
 
   private getMimeType(filename: string): string {
-    const ext = filename.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      case 'gif':
-        return 'image/gif';
-      case 'webp':
-        return 'image/webp';
-      case 'svg':
-        return 'image/svg+xml';
-      default:
-        return 'image/png';
-    }
+    return mime.getType(filename) ?? 'image/png';
   }
 
   private getErrorMessage(error: unknown): string {

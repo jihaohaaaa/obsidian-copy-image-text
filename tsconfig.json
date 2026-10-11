@@ -9,7 +9,6 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedParameters": true,
     "moduleResolution": "bundler",
-    "importHelpers": true,
     "isolatedModules": true,
     "lib": ["DOM", "ES2022"],
     "types": ["node"]

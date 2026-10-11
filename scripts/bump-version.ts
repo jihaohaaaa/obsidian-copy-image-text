@@ -1,22 +1,11 @@
-import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
+import { execa } from 'execa';
 
 const targetVersion = process.argv[2];
 
 if (!targetVersion || !/^\d+\.\d+\.\d+$/.test(targetVersion)) {
   console.error('Usage: pnpm run version:bump <x.y.z>');
   process.exit(1);
-}
-
-function runCommand(command: string, args: string[]): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit' });
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(' ')} failed with exit code ${code}`));
-    });
-  });
 }
 
 async function readJson<T>(path: string): Promise<T> {
@@ -64,7 +53,7 @@ async function main(): Promise<void> {
   );
   await writeFile('README-EN.md', readmeEn);
 
-  await runCommand('pnpm', ['format']);
+  await execa('pnpm', ['format'], { stdio: 'inherit' });
 
   console.log(`Updated plugin version to ${targetVersion}`);
 }

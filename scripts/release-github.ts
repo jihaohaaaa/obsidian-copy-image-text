@@ -1,30 +1,11 @@
-import { execFile as execFileCallback, spawn } from 'node:child_process';
 import { access, readFile } from 'node:fs/promises';
-import { promisify } from 'node:util';
-
-const execFileAsync = promisify(execFileCallback);
+import { execa } from 'execa';
 
 const targetVersion = process.argv[2];
 
 if (!targetVersion || !/^\d+\.\d+\.\d+$/.test(targetVersion)) {
   console.error('Usage: pnpm run release:github <x.y.z>');
   process.exit(1);
-}
-
-function run(command: string, args: string[]): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit' });
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(' ')} failed with exit code ${code}`));
-    });
-  });
-}
-
-async function output(command: string, args: string[]): Promise<string> {
-  const { stdout } = await execFileAsync(command, args, { encoding: 'utf8' });
-  return stdout.trim();
 }
 
 type PackageJson = {
@@ -44,16 +25,16 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const status = await output('git', ['status', '--short']);
-  if (status) {
+  const { stdout: status } = await execa('git', ['status', '--short']);
+  if (status.trim()) {
     console.error('Release requires a clean git worktree. Commit or stash changes first.');
     console.error(status);
     process.exit(1);
   }
 
-  await run('pnpm', ['run', 'version:bump', targetVersion]);
-  await run('pnpm', ['install', '--lockfile-only', '--ignore-scripts']);
-  await run('pnpm', ['run', 'build']);
+  await execa('pnpm', ['run', 'version:bump', targetVersion], { stdio: 'inherit' });
+  await execa('pnpm', ['install', '--lockfile-only', '--ignore-scripts'], { stdio: 'inherit' });
+  await execa('pnpm', ['run', 'build'], { stdio: 'inherit' });
 
   for (const asset of ['main.js', 'manifest.json']) {
     try {
@@ -64,35 +45,43 @@ async function main(): Promise<void> {
     }
   }
 
-  const currentBranch = await output('git', ['branch', '--show-current']);
+  const { stdout: currentBranch } = await execa('git', ['branch', '--show-current']);
 
-  await run('git', [
-    'add',
-    'README-EN.md',
-    'README.md',
-    'manifest.json',
-    'pnpm-lock.yaml',
-    'package.json',
-    'versions.json'
-  ]);
-  await run('git', ['commit', '-m', `Release ${targetVersion}`]);
-  await run('git', ['push', 'origin', currentBranch]);
+  await execa(
+    'git',
+    [
+      'add',
+      'README-EN.md',
+      'README.md',
+      'manifest.json',
+      'pnpm-lock.yaml',
+      'package.json',
+      'versions.json'
+    ],
+    { stdio: 'inherit' }
+  );
+  await execa('git', ['commit', '-m', `Release ${targetVersion}`], { stdio: 'inherit' });
+  await execa('git', ['push', 'origin', currentBranch.trim()], { stdio: 'inherit' });
 
-  await run('gh', [
-    'release',
-    'create',
-    targetVersion,
-    'main.js',
-    'manifest.json',
-    '--repo',
-    repo,
-    '--target',
-    currentBranch,
-    '--title',
-    targetVersion,
-    '--notes',
-    `Release ${targetVersion} for Obsidian/BRAT installation.\n\nAssets included:\n- main.js\n- manifest.json`
-  ]);
+  await execa(
+    'gh',
+    [
+      'release',
+      'create',
+      targetVersion,
+      'main.js',
+      'manifest.json',
+      '--repo',
+      repo,
+      '--target',
+      currentBranch.trim(),
+      '--title',
+      targetVersion,
+      '--notes',
+      `Release ${targetVersion} for Obsidian/BRAT installation.\n\nAssets included:\n- main.js\n- manifest.json`
+    ],
+    { stdio: 'inherit' }
+  );
 }
 
 main().catch((err: unknown) => {
